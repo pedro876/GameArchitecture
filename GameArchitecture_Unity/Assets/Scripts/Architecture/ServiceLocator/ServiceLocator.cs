@@ -6,10 +6,11 @@ namespace Architecture.ServiceLocator
 {
     public static class ServiceLocator
     {
-        private const string HEADER = "[SERVICES] ";
+        public static bool enableLog = false;
 
         private static Dictionary<Type, object> _services = new Dictionary<Type, object>();
-        public static bool enableLog = false;
+
+        private const string HEADER = "[SERVICES] ";
 
         static ServiceLocator()
         {
