@@ -1,10 +1,10 @@
 {
-    "name": "Architecture.ServiceLocator.Tests",
+    "name": "Architecture.Services.Tests",
     "rootNamespace": "",
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "Architecture.ServiceLocator"
+        "Architecture.Services"
     ],
     "includePlatforms": [
         "Editor"

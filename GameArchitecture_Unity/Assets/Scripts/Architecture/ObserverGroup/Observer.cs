@@ -6,8 +6,8 @@ using UnityEditor;
 
 public abstract class Observer<TEnum> : MonoBehaviour, IObserver<TEnum> where TEnum : System.Enum
 {
-    [SerializeField] bool subscribeAll = true;
     [SerializeField] bool subscribedWhileDisabled = false;
+    [SerializeField] bool subscribeAll = true;
     [SerializeField] List<TEnum> eventsToSubscribe = new List<TEnum>();
 
     public string GetName() => name;
@@ -82,31 +82,11 @@ public class ObserverEditor : Editor
     {
         subscribeAll = serializedObject.FindProperty("subscribeAll");
         eventsToSubscribe = serializedObject.FindProperty("eventsToSubscribe");
-        CreateHeaderBackgroundStyle(Color.black);
-        //CreateHeaderLabelStyle();
-    }
-
-    private void CreateHeaderBackgroundStyle(Color color)
-    {
-        backgroundStyle = new GUIStyle();
-        texture = new Texture2D(1, 1);
-        texture.SetPixel(0, 0, color);
-        texture.Apply();
-        backgroundStyle.normal.background = texture;
-
-    }
-
-    private void CreateHeaderLabelStyle()
-    {
-        if (textStyle != null) return;
-        textStyle = GUI.skin.GetStyle("Label");
-        textStyle.alignment = TextAnchor.MiddleCenter;
-        textStyle.fontStyle = FontStyle.Bold;
+        
     }
 
     public override void OnInspectorGUI()
     {
-        CreateHeaderLabelStyle();
         serializedObject.Update();
         SerializedProperty iterator = serializedObject.GetIterator();
         iterator.NextVisible(true);
@@ -121,8 +101,12 @@ public class ObserverEditor : Editor
 
         while (iterator.NextVisible(false))
         {
-            if (wasEventsToSubscribe) //and there are more properties
-                EndObserverInspector();
+            if (wasEventsToSubscribe)//and there are more properties
+            {
+                EditorGUILayout.Space();
+                EditorGUILayout.Space();
+                WriteHeader("OTHER PROPERTIES");
+            }
 
             wasEventsToSubscribe = iterator.propertyPath == eventsToSubscribe.propertyPath;
             if (wasEventsToSubscribe && subscribeAll.boolValue)
@@ -133,21 +117,34 @@ public class ObserverEditor : Editor
         serializedObject.ApplyModifiedProperties();
     }
 
-    private void EndObserverInspector()
-    {
-        EditorGUILayout.Space();
-        EditorGUILayout.Space();
-        WriteHeader("OTHER PROPERTIES");
-    }
-
     private void WriteHeader(string text)
     {
-        /*var centeredStyle = GUI.skin.GetStyle("Label");
-        centeredStyle.alignment = TextAnchor.UpperCenter;
-        centeredStyle.fontStyle = FontStyle.Bold;*/
+        CreateHeaderBackgroundStyle();
+        CreateHeaderLabelStyle();
         GUILayout.BeginHorizontal(backgroundStyle);
         GUILayout.Label(text, textStyle);
         GUILayout.EndHorizontal();
+        return;
+
+        void CreateHeaderBackgroundStyle()
+        {
+            if (backgroundStyle != null) return;
+            backgroundStyle = new GUIStyle();
+            texture = new Texture2D(1, 1);
+            texture.SetPixel(0, 0, new Color(.12f, .12f, .12f));
+            texture.Apply();
+            backgroundStyle.normal.background = texture;
+        }
+
+        void CreateHeaderLabelStyle()
+        {
+            if (textStyle != null) return;
+            textStyle = GUI.skin.GetStyle("Label");
+            textStyle.alignment = TextAnchor.MiddleCenter;
+            textStyle.fontStyle = FontStyle.Bold;
+        }
     }
+
+    
 }
 #endif

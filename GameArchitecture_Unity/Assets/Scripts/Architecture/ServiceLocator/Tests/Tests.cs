@@ -1,18 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using Architecture.ServiceLocator;
+using Architecture.Services;
 using JetBrains.Annotations;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-public class ServiceLocator_Tests
+public class Tests
 {
     const string testStr = "Hello";
 
     [Test]
-    public void ServiceLocator_Test01()
+    public void Test01()
     {
         ServiceLocator.Clean();
         StringBuilder builder = ServiceLocator.Get<StringBuilder>();
@@ -21,7 +21,7 @@ public class ServiceLocator_Tests
     }
 
     [Test]
-    public void ServiceLocator_Test02()
+    public void Test02()
     {
         ServiceLocator.Clean();
         StringBuilder builder = new StringBuilder(testStr);
@@ -32,7 +32,7 @@ public class ServiceLocator_Tests
     }
 
     [Test]
-    public void ServiceLocator_Test03()
+    public void Test03()
     {
         ServiceLocator.Clean();
         StringBuilder builder = new StringBuilder(testStr);

@@ -1,0 +1,17 @@
+{
+    "name": "Architecture.Logging",
+    "rootNamespace": "",
+    "references": [
+        "GUID:27490d9e0be81334583b13d505e10453",
+        "GUID:12af6b2f20d3bfd488aa7d7e84976add"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

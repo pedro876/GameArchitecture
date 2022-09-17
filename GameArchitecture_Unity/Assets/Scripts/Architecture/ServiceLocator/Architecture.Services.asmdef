@@ -1,5 +1,5 @@
 {
-    "name": "Architecture.ServiceLocator",
+    "name": "Architecture.Services",
     "rootNamespace": "",
     "references": [],
     "includePlatforms": [],
