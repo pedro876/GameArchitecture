@@ -10,6 +10,7 @@ namespace Architecture.Logging
         void Show();
         void Show(float width);
         void ChangeWidth(float width);
+        void Clear();
     }
 }
 

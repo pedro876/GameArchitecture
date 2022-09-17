@@ -16,7 +16,10 @@ public abstract class Observer<TEnum> : MonoBehaviour, IObserver<TEnum> where TE
 
     private void Awake()
     {
-        Subscribe();
+        if (gameObject.activeInHierarchy)
+            Subscribe();
+        else if (subscribedWhileDisabled)
+            Subscribe();
         DoAwake();
     }
 

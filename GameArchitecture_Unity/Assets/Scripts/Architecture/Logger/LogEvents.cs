@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Architecture.Logging
 {
-    public enum LogEvents
+    internal enum LogEvents
     {
         Log, LogWarning, LogError, LogSuccess
     }
