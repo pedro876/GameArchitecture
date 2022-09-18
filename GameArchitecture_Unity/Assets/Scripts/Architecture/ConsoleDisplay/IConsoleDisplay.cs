@@ -4,12 +4,10 @@ using UnityEngine;
 
 namespace Architecture.Logging
 {
-    public interface ILogDisplay
+    public interface IConsoleDisplay
     {
         void Hide();
         void Show();
-        void Show(float width);
-        void ChangeWidth(float width);
         void Clear();
     }
 }

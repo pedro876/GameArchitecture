@@ -756,7 +756,7 @@ PrefabInstance:
     - target: {fileID: 6996315741785978378, guid: cb1d12a76ca7ff24abbcc33f1a4bade8,
         type: 3}
       propertyPath: m_Name
-      value: DisplayLog
+      value: ConsoleDisplay
       objectReference: {fileID: 0}
     - target: {fileID: 6996315741785978382, guid: cb1d12a76ca7ff24abbcc33f1a4bade8,
         type: 3}
@@ -863,11 +863,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 6996315741785978383, guid: cb1d12a76ca7ff24abbcc33f1a4bade8,
-        type: 3}
-      propertyPath: printLogsOnStart
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 6996315741837612413, guid: cb1d12a76ca7ff24abbcc33f1a4bade8,
         type: 3}
       propertyPath: m_AnchorMax.x
@@ -876,21 +871,6 @@ PrefabInstance:
     - target: {fileID: 6996315741837612413, guid: cb1d12a76ca7ff24abbcc33f1a4bade8,
         type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6996315741991453370, guid: cb1d12a76ca7ff24abbcc33f1a4bade8,
-        type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6996315741991453370, guid: cb1d12a76ca7ff24abbcc33f1a4bade8,
-        type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6996315741991453370, guid: cb1d12a76ca7ff24abbcc33f1a4bade8,
-        type: 3}
-      propertyPath: m_SizeDelta.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6996315742079189088, guid: cb1d12a76ca7ff24abbcc33f1a4bade8,

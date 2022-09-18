@@ -6,7 +6,7 @@ namespace Architecture.Services
 {
     public static class ServiceLocator
     {
-        public static bool enableLog = false;
+        public static bool enableLog = true;
 
         private static Dictionary<Type, object> _services = new Dictionary<Type, object>();
 
@@ -14,7 +14,7 @@ namespace Architecture.Services
 
         static ServiceLocator()
         {
-            Debug.Log($"{HEADER}Instantiated ServiceLocator");
+            Debug.Log($"{HEADER}Instantiated ServiceLocator".AddSuccessPrefix());
         }
 
         public static T Get<T>()
@@ -35,10 +35,16 @@ namespace Architecture.Services
         public static T Set<T>(T overrideService)
         {
             Type type = typeof(T);
-            if (_services.ContainsKey(type))
+            if (enableLog)
             {
-                if (enableLog) Debug.LogWarning($"{HEADER}Service {type} overridden");
+                if (_services.ContainsKey(type))
+                {
+                    Debug.LogWarning($"{HEADER}Service {type} overridden");
+                }
+                else
+                    Debug.Log($"{HEADER}Service {type} registered".AddSuccessPrefix());
             }
+            
             _services[type] = overrideService;
             return overrideService;
         }

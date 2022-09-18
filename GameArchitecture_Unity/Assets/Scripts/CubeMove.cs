@@ -13,22 +13,22 @@ public class CubeMove : MonoBehaviour
     {
         map["up"].performed += (evt) =>
         {
-            this.Log("up");
+            Debug.Log("up");
             Move(Vector3.forward);
         };
         map["down"].performed += (evt) =>
         {
-            this.Log("down");
+            Debug.Log("down");
             Move(-Vector3.forward);
         };
         map["left"].performed += (evt) =>
         {
-            this.Log("left");
+            Debug.Log("left");
             Move(-Vector3.right);
         };
         map["right"].performed += (evt) =>
         {
-            this.Log("right");
+            Debug.Log("right");
             Move(Vector3.right);
         };
         map.Enable();
