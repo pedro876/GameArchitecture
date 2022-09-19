@@ -35,15 +35,27 @@ namespace Architecture.Logging
         [SerializeField] bool autoScroll = true;
 
         [Header("References")]
-        [SerializeField] Button clearButton;
+        [SerializeField] Button expandHorizontalButton;
+        [SerializeField] Button expandVerticalButton;
+        private bool _isExpandedHorizontally = false;
+        private bool _isExpandedVertically = true;
+        private Text _expandHorizontalText;
+        private Text _expandVerticalText;
+        [SerializeField] Button clearButton; 
         [SerializeField] Button messageButton;
         [SerializeField] Button warningButton;
         [SerializeField] Button errorButton;
         [SerializeField] Button successButton;
         [SerializeField] Text textTemplate;
-        ScrollRect _scrollRect;
-        RectTransform _scrollTransform;
-        RectTransform _contentTransform;
+        private ScrollRect _scrollRect;
+        private RectTransform _scrollTransform;
+        private RectTransform _contentTransform;
+        private RectTransform _canvasTransform;
+        //private CanvasScaler _canvasScaler;
+        private float _originalWidth;
+        private float _originalHeight;
+        private const float _contractedVerticalSize = 42;
+
         //private Dictionary<Transform, ConsoleDisplayEntry> _entries;
         private ConsoleDisplayEntry[] _logEntries;
         private ConsoleDisplayEntry[] _warningEntries;
@@ -61,6 +73,7 @@ namespace Architecture.Logging
         private Image _successImage;
 
         private bool _configured = false;
+        
 
         public void Hide() => gameObject.SetActive(false);
         public void Show() => gameObject.SetActive(true);
@@ -83,6 +96,13 @@ namespace Architecture.Logging
         {
             var size = _scrollTransform.sizeDelta;
             size.x = width;
+            _scrollTransform.sizeDelta = size;
+        }
+
+        private void ChangeHeight(float height)
+        {
+            var size = _scrollTransform.sizeDelta;
+            size.y = height;
             _scrollTransform.sizeDelta = size;
         }
 
@@ -186,10 +206,22 @@ namespace Architecture.Logging
 
         private void Awake()
         {
+            _scrollRect = GetComponentInChildren<ScrollRect>();
+            _scrollTransform = _scrollRect.GetComponent<RectTransform>();
+            _contentTransform = GetComponentInChildren<VerticalLayoutGroup>().GetComponent<RectTransform>();
+            _canvasTransform = GetComponent<RectTransform>();
+            //_canvasScaler = GetComponent<CanvasScaler>();
+            //Debug.Log(_canvasScaler.referenceResolution.y);
+            //_contractedVerticalSize = _contentTransform.rect.height;// textTemplate.GetComponent<RectTransform>().sizeDelta.y;
+            //ChangeHeight(_canvasScaler.referenceResolution.y + _scrollTransform.anchoredPosition.y * 2f);
+            _originalWidth = _scrollTransform.sizeDelta.x;
+            _originalHeight = _scrollTransform.sizeDelta.y;
             _messageImage = messageButton.GetComponent<Image>();
             _warningImage = warningButton.GetComponent<Image>();
             _errorImage = errorButton.GetComponent<Image>();
             _successImage = successButton.GetComponent<Image>();
+            _expandHorizontalText = expandHorizontalButton.GetComponentInChildren<Text>();
+            _expandVerticalText = expandVerticalButton.GetComponentInChildren<Text>();
             CreatePools();
             BindButtonActions();
             Application.logMessageReceived += OnLog;
@@ -213,6 +245,8 @@ namespace Architecture.Logging
 
         private void BindButtonActions()
         {
+            expandHorizontalButton.onClick.AddListener(OnExpandHorizontal);
+            expandVerticalButton.onClick.AddListener(OnExpandVertical);
             clearButton.onClick.AddListener(Clear);
             messageButton.onClick.AddListener(() =>
             {
@@ -261,15 +295,26 @@ namespace Architecture.Logging
                     entries[i].gameObject.SetActive(visible && i < count);
                 }
             }
+
+            void OnExpandHorizontal()
+            {
+                _isExpandedHorizontally = !_isExpandedHorizontally;
+                _expandHorizontalText.transform.Rotate(Vector3.forward, 180f);
+                ChangeWidth(_isExpandedHorizontally ? _canvasTransform.sizeDelta.x - _scrollTransform.anchoredPosition.x*2f : _originalWidth);
+
+                //if(_isExpandedHorizontally)
+            }
+
+            void OnExpandVertical()
+            {
+                _isExpandedVertically = !_isExpandedVertically;
+                _expandVerticalText.transform.Rotate(Vector3.forward, 180f);
+                ChangeHeight(_isExpandedVertically ? _originalHeight : _contractedVerticalSize);
+            }
         }
 
         private void CreatePools()
         {
-            _scrollRect = GetComponentInChildren<ScrollRect>();
-            _scrollTransform = _scrollRect.GetComponent<RectTransform>();
-            _contentTransform = GetComponentInChildren<VerticalLayoutGroup>().GetComponent<RectTransform>();
-
-
             _logEntries = new ConsoleDisplayEntry[maxLogEntriesPerType];
             _warningEntries = new ConsoleDisplayEntry[maxLogEntriesPerType];
             _errorEntries = new ConsoleDisplayEntry[maxLogEntriesPerType];
