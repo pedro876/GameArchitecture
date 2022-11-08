@@ -5,9 +5,14 @@ using Architecture.Services;
 using UnityEngine.InputSystem;
 using Architecture.ObserverGroup;
 
-public class CubeMove : MonoBehaviour
+public class CubeMove : Observer<LogType>
 {
     [SerializeField] InputActionMap map;
+
+    public override void Notify(LogType evt, object evtInfo)
+    {
+        Debug.Log(evtInfo.ToString());
+    }
 
     void Start()
     {
