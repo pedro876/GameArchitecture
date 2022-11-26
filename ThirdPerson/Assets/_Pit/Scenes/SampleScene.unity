@@ -359,15 +359,11 @@ MonoBehaviour:
   minAngle: 30
   maxAngle: 120
   preferredDistance: 4
-  recoverDistSpeed: 4
   recoverDistanceMaxTime: 1
-  recoverDistanceTime: 0
-  recoveringDistance: 0
-  originalDistance: 0
   recoverDistanceThreshold: 0.03
   surfaceNormalWeight: 0.5
   minDistToTarget: 0.75
-  layerMask:
+  occlusionMask:
     serializedVersion: 2
     m_Bits: 1
 --- !u!135 &330585549

@@ -8,7 +8,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Rigidbody), typeof(SphereCollider))]
 public class CameraController : MonoBehaviour, Controls.ICameraMapActions
 {
-    private const int TIME_TO_UNLOCK_CAMERA = 100;
+    private const int TIME_TO_UNLOCK_CAMERA = 500;
 
     [Tooltip("This is the target the camera will follow")] public Transform target;
 
@@ -28,14 +28,15 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
 
 
     [Header("Raycasting")]
-    [SerializeField][Range(0f,1f)] float surfaceNormalWeight = 0.5f;
+    [SerializeField][Range(0f,1f)] float surfaceNormalWeight = 0.25f;
     [SerializeField] float minDistToTarget = 0.75f;
-    [SerializeField] LayerMask layerMask;
+    [SerializeField] LayerMask occlusionMask;
 
     private Vector2 _inputAxis = Vector2.zero;
     private Rigidbody _rb;
     private SphereCollider _col;
     private bool _isColliding = false;
+    private int _collisionCount = 0;
     private bool _isOccluded = false;
 
     public void OnAxis(InputAction.CallbackContext context) => _inputAxis = context.ReadValue<Vector2>();
@@ -43,14 +44,13 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
     private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
-        //_rb.interpolation = RigidbodyInterpolation.Extrapolate;
         _rb.constraints = RigidbodyConstraints.FreezeRotation;
         _rb.drag = 0f;
         _rb.angularDrag = 0f;
         _rb.mass = 1f;
         _rb.useGravity = false;
-        //_rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         _col = GetComponent<SphereCollider>();
+        _collisionCount = 0;
     }
 
     private void Start()
@@ -70,10 +70,9 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
 
     private void LateUpdate()
     {
-        //X ROTATION
+        if (target == null) return;
+        //ROTATION
         var rotX = Quaternion.AngleAxis(_inputAxis.x * Time.deltaTime, Vector3.up);
-
-        //Y ROTATION
         float angleY = _inputAxis.y * Time.deltaTime;
         float currentAngle = Vector3.Angle(Vector3.up, -transform.forward);
         float newAngle = currentAngle - angleY;
@@ -88,22 +87,19 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
         Vector3 newRelativePosition = rotX * rotY * relativePosition;
 
         Vector3 origin = target.position + newRelativePosition.normalized * minDistToTarget;
-        Vector3 destiny = target.position + newRelativePosition.normalized * (newRelativePosition.magnitude - _col.radius);
+        Vector3 destiny = target.position + newRelativePosition.normalized * newRelativePosition.magnitude;
         Vector3 dir = destiny - origin;
         _lastRayDestiny = destiny;
         _lastRayOrigin = origin;
-        if (Physics.Raycast(origin, dir, out RaycastHit hit, dir.magnitude, layerMask))
+        if (Physics.Raycast(origin, dir, out RaycastHit hit, dir.magnitude, occlusionMask))
             _isOccluded = hit.transform != transform;
         else
             _isOccluded = false;
 
         if (_isOccluded)
         {
-            //Debug.Log(hit.distance);
             Vector3 outOfSurfaceDir = Vector3.Lerp(-dir.normalized, hit.normal, surfaceNormalWeight) * _col.radius;
             newRelativePosition = (hit.point + outOfSurfaceDir) - target.position;
-
-            //newRelativePosition = newRelativePosition.normalized * (hit.distance+minDistToTarget-_col.radius);//(hit.distance-_col.radius);
         }
 
         //CLAMP CAMERA HEIGHT
@@ -130,8 +126,6 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
             newRelativePosition = newRelativePosition.normalized * newMagnitude;
             isClamped = true;
         }
-
-        
 
         //DISTANCE RECOVERING
         float distance = newRelativePosition.magnitude;
@@ -160,31 +154,9 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
             _recoveringDistance = false;
         }
 
-        
-
         Vector3 newWorldPosition = newRelativePosition + target.position;
-
-        //Vector3 step = (newPosition - transform.position) / iterations;
-        //Vector3 originalPosition = transform.position;
-        //Vector3 step = (newPosition - transform.position) / iterations;
-        //Vector3 originalPos = transform.position;
-        //for (int i = 1; i <= iterations; i++)
-        //{
-        //    //Vector3 step = (newPosition - _rb.position) / (iterations-i);
-        //    _rb.MovePosition(originalPos + step*i);
-        //}
-
         _rb.MovePosition(newWorldPosition);
-
-        
-
-        //_rb.velocity = Vector3.zero;
-        //_rb.AddForce(newPosition - transform.position, mode);
-        //_rb.velocity = (newPosition - transform.position)/Time.fixedDeltaTime;
         transform.LookAt(target.position);
-        //var lookRot = Quaternion.LookRotation((target.position - newPosition).normalized);
-        //transform.rotation = lookRot;
-        //_rb.MoveRotation(lookRot);
     }
 
     private void OnDrawGizmos()
@@ -197,13 +169,21 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
         Gizmos.DrawWireSphere(transform.InverseTransformPoint(target.position), minDistToTarget);
     }
 
+
+    
     private void OnCollisionEnter(Collision collision)
     {
+        _collisionCount++;
         _isColliding = true;
     }
 
     private void OnCollisionExit(Collision collision)
     {
-        _isColliding = false;
+        _collisionCount--;
+        if(_collisionCount <= 0)
+        {
+            _collisionCount = 0;
+            _isColliding = false;
+        }
     }
 }
