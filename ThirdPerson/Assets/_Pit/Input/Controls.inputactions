@@ -1,0 +1,34 @@
+{
+    "name": "Controls",
+    "maps": [
+        {
+            "name": "CameraMap",
+            "id": "2e81927d-937e-4217-9a09-b0cc27a02631",
+            "actions": [
+                {
+                    "name": "Axis",
+                    "type": "PassThrough",
+                    "id": "36f263cb-9504-482e-973c-1c596a0d5dd2",
+                    "expectedControlType": "Delta",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "a002a70a-f9c3-445d-964f-c94924ce957c",
+                    "path": "<Mouse>/delta",
+                    "interactions": "",
+                    "processors": "ScaleVector2(x=100,y=100)",
+                    "groups": "",
+                    "action": "Axis",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
