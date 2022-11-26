@@ -24,7 +24,7 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
     [SerializeField] float recoverDistanceThreshold = 0.03f;
     private float _recoverDistanceTime = 0f;
     private float _originalDistance = 0f;
-    private bool _recoveringDistance = false;
+    [SerializeField] private bool _recoveringDistance = false;
 
 
     [Header("Raycasting")]
@@ -39,6 +39,11 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
     private int _collisionCount = 0;
     private bool _isOccluded = false;
 
+    private Vector3 _lastTargetPosition;
+
+    private Vector3 _lastRayOrigin;
+    private Vector3 _lastRayDestiny;
+
     public void OnAxis(InputAction.CallbackContext context) => _inputAxis = context.ReadValue<Vector2>();
 
     private void Awake()
@@ -51,10 +56,14 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
         _rb.useGravity = false;
         _col = GetComponent<SphereCollider>();
         _collisionCount = 0;
+        if(target != null)
+            _lastTargetPosition = target.position;
     }
 
     private void Start()
     {
+        transform.position = target.position - target.forward * preferredDistance;
+
         InputManager.controls.CameraMap.SetCallbacks(this);
         UnlockCamera();
 
@@ -65,29 +74,29 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
         }
     }
 
-    private Vector3 _lastRayOrigin;
-    private Vector3 _lastRayDestiny;
-
-    private void LateUpdate()
+    private void FixedUpdate()
     {
+        float deltaTime = Time.fixedDeltaTime;
         if (target == null) return;
         //ROTATION
-        var rotX = Quaternion.AngleAxis(_inputAxis.x * Time.deltaTime, Vector3.up);
-        float angleY = _inputAxis.y * Time.deltaTime;
-        float currentAngle = Vector3.Angle(Vector3.up, -transform.forward);
-        float newAngle = currentAngle - angleY;
+        Vector3 forward = _rb.rotation * Vector3.forward;
+        Vector3 right = _rb.rotation * Vector3.right;
+        var rotX = Quaternion.AngleAxis(_inputAxis.x * deltaTime, Vector3.up);
+        float angleY = _inputAxis.y * deltaTime;
+        float currentAngle = Vector3.Angle(Vector3.up, forward);
+        float newAngle = currentAngle + angleY;
         if (newAngle > maxAngle)
-            angleY = -maxAngle + currentAngle;
+            angleY = maxAngle - currentAngle;
         else if (newAngle < minAngle)
-            angleY = -minAngle + currentAngle;
-        var rotY = Quaternion.AngleAxis(angleY, transform.right);
+            angleY = minAngle - currentAngle;
+        var rotY = Quaternion.AngleAxis(angleY, right);
 
         //OCCLUSION CHECKING
-        Vector3 relativePosition = transform.position - target.position;
+        Vector3 relativePosition = _rb.position - _lastTargetPosition;
         Vector3 newRelativePosition = rotX * rotY * relativePosition;
 
-        Vector3 origin = target.position + newRelativePosition.normalized * minDistToTarget;
-        Vector3 destiny = target.position + newRelativePosition.normalized * newRelativePosition.magnitude;
+        Vector3 origin = _lastTargetPosition + newRelativePosition.normalized * minDistToTarget;
+        Vector3 destiny = _lastTargetPosition + newRelativePosition.normalized * newRelativePosition.magnitude;
         Vector3 dir = destiny - origin;
         _lastRayDestiny = destiny;
         _lastRayOrigin = origin;
@@ -95,16 +104,15 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
             _isOccluded = hit.transform != transform;
         else
             _isOccluded = false;
-
+        
         if (_isOccluded)
         {
             Vector3 outOfSurfaceDir = Vector3.Lerp(-dir.normalized, hit.normal, surfaceNormalWeight) * _col.radius;
-            newRelativePosition = (hit.point + outOfSurfaceDir) - target.position;
+            newRelativePosition = (hit.point + outOfSurfaceDir) - _lastTargetPosition;
         }
 
         //CLAMP CAMERA HEIGHT
-        bool isClamped = false;
-        isClamped = newRelativePosition.y + recoverDistanceThreshold >= topHeight || newRelativePosition.y-recoverDistanceThreshold <= bottomHeight;
+        bool isClamped = newRelativePosition.y + recoverDistanceThreshold >= topHeight || newRelativePosition.y-recoverDistanceThreshold <= bottomHeight;
         if (newRelativePosition.y >= topHeight)
         {
             float op = newRelativePosition.y - topHeight;
@@ -115,7 +123,7 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
             newRelativePosition = newRelativePosition.normalized * newMagnitude;
             isClamped = true;
         }
-
+        
         if (newRelativePosition.y <= bottomHeight)
         {
             float op = newRelativePosition.y - bottomHeight;
@@ -129,24 +137,27 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
 
         //DISTANCE RECOVERING
         float distance = newRelativePosition.magnitude;
-        if (!isClamped && !_isColliding && !_isOccluded && distance < preferredDistance-recoverDistanceThreshold) //must recover distance
+        bool wrongDistance = _recoveringDistance || distance < preferredDistance - recoverDistanceThreshold || distance > preferredDistance + recoverDistanceThreshold;
+        if (!isClamped && !_isColliding && !_isOccluded && wrongDistance) //must recover distance
         {
             if (!_recoveringDistance)
             {
                 _originalDistance = newRelativePosition.magnitude;
-                _recoverDistanceTime = Time.deltaTime;
+                _recoverDistanceTime = deltaTime;
                 _recoveringDistance = true;
             }
             else
             {
-                _recoverDistanceTime += Time.deltaTime;
+                _recoverDistanceTime += deltaTime;
                 if(_recoverDistanceTime > recoverDistanceMaxTime)
                 {
                     _recoveringDistance = false;
                 }
             }
 
-            float targetDistance = Mathf.SmoothStep(_originalDistance, preferredDistance, _recoverDistanceTime / recoverDistanceMaxTime);
+            float lerp = Mathf.SmoothStep(0f, 1f, _recoverDistanceTime / recoverDistanceMaxTime);
+
+            float targetDistance = Mathf.Lerp(_originalDistance, preferredDistance, lerp);
             newRelativePosition = newRelativePosition.normalized * targetDistance;
         }
         else
@@ -155,8 +166,12 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
         }
 
         Vector3 newWorldPosition = newRelativePosition + target.position;
+
         _rb.MovePosition(newWorldPosition);
-        transform.LookAt(target.position);
+        //_rb.velocity = (newWorldPosition - _rb.position)/Time.fixedDeltaTime;
+        _rb.MoveRotation(Quaternion.LookRotation(-newRelativePosition));
+        //transform.LookAt(target.position);
+        _lastTargetPosition = target.position;
     }
 
     private void OnDrawGizmos()

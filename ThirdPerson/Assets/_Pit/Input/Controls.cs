@@ -43,11 +43,83 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                     ""id"": ""a002a70a-f9c3-445d-964f-c94924ce957c"",
                     ""path"": ""<Mouse>/delta"",
                     ""interactions"": """",
-                    ""processors"": ""ScaleVector2(x=100,y=100)"",
+                    ""processors"": ""ScaleVector2(x=20,y=20)"",
                     ""groups"": """",
                     ""action"": ""Axis"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                }
+            ]
+        },
+        {
+            ""name"": ""MovementMap"",
+            ""id"": ""78486ec0-fbcd-45d3-bc5c-4de166b2a2c6"",
+            ""actions"": [
+                {
+                    ""name"": ""Motion"",
+                    ""type"": ""PassThrough"",
+                    ""id"": ""61c399e4-55df-4fd7-8c7a-14f125f6134c"",
+                    ""expectedControlType"": ""Stick"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": ""2D Vector"",
+                    ""id"": ""155219c8-6c37-49af-9466-8b4a7dfd6e5b"",
+                    ""path"": ""2DVector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Motion"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""a23bcf60-cadc-46eb-a782-bc802cf0bf27"",
+                    ""path"": ""<Keyboard>/w"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Motion"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""c333bbfe-3d19-4370-91be-702233b9a98c"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Motion"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""left"",
+                    ""id"": ""34553df4-2a5d-4bd1-b088-c49ac2bf9afc"",
+                    ""path"": ""<Keyboard>/a"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Motion"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""right"",
+                    ""id"": ""e0dbbfcc-276f-4f17-8f28-e252254f90d2"",
+                    ""path"": ""<Keyboard>/d"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Motion"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
                 }
             ]
         }
@@ -57,6 +129,9 @@ public partial class @Controls : IInputActionCollection2, IDisposable
         // CameraMap
         m_CameraMap = asset.FindActionMap("CameraMap", throwIfNotFound: true);
         m_CameraMap_Axis = m_CameraMap.FindAction("Axis", throwIfNotFound: true);
+        // MovementMap
+        m_MovementMap = asset.FindActionMap("MovementMap", throwIfNotFound: true);
+        m_MovementMap_Motion = m_MovementMap.FindAction("Motion", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -145,8 +220,45 @@ public partial class @Controls : IInputActionCollection2, IDisposable
         }
     }
     public CameraMapActions @CameraMap => new CameraMapActions(this);
+
+    // MovementMap
+    private readonly InputActionMap m_MovementMap;
+    private IMovementMapActions m_MovementMapActionsCallbackInterface;
+    private readonly InputAction m_MovementMap_Motion;
+    public struct MovementMapActions
+    {
+        private @Controls m_Wrapper;
+        public MovementMapActions(@Controls wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Motion => m_Wrapper.m_MovementMap_Motion;
+        public InputActionMap Get() { return m_Wrapper.m_MovementMap; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(MovementMapActions set) { return set.Get(); }
+        public void SetCallbacks(IMovementMapActions instance)
+        {
+            if (m_Wrapper.m_MovementMapActionsCallbackInterface != null)
+            {
+                @Motion.started -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnMotion;
+                @Motion.performed -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnMotion;
+                @Motion.canceled -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnMotion;
+            }
+            m_Wrapper.m_MovementMapActionsCallbackInterface = instance;
+            if (instance != null)
+            {
+                @Motion.started += instance.OnMotion;
+                @Motion.performed += instance.OnMotion;
+                @Motion.canceled += instance.OnMotion;
+            }
+        }
+    }
+    public MovementMapActions @MovementMap => new MovementMapActions(this);
     public interface ICameraMapActions
     {
         void OnAxis(InputAction.CallbackContext context);
+    }
+    public interface IMovementMapActions
+    {
+        void OnMotion(InputAction.CallbackContext context);
     }
 }
