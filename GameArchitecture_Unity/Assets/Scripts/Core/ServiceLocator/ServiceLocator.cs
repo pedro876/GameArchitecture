@@ -49,6 +49,11 @@ namespace Architecture.Services
             return overrideService;
         }
 
+        public static bool Has<T>()
+        {
+            return _services.ContainsKey(typeof(T));
+        }
+
         public static void Clean()
         {
             if (enableLog) Debug.LogWarning($"{HEADER}Cleaning {_services.Count} services");

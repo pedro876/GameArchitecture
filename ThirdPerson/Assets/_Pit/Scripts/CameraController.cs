@@ -29,11 +29,19 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
 
     [Header("Occlusion")]
     [SerializeField] bool checkOcclussion = true;
+    [SerializeField] bool checkOverlap = true;
     [SerializeField] float radius = 0.3f;
     [SerializeField][Range(0f,1f)] float surfacePenetration = 0.7f;
     [SerializeField][Range(0f, 1f)] float surfaceNormalWeight = 0.25f;
     [SerializeField] float minDistToTarget = 0.3f;
     [SerializeField] LayerMask occlusionMask;
+    [SerializeField] bool smoothDistanceRecovering = true;
+    [SerializeField] float recoverDistanceMaxTime = 1f;
+    bool _isRecoveringDistance = false;
+    float _recoverDistanceTime = 0f;
+    float _originalDistance = 0f;
+    private float _lastDistance;
+    private bool _isGoingOutOfWall = true;
 
     private bool _isOverlapping = false;
     private Collider[] _overlappers;
@@ -46,8 +54,18 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
     private Vector3 _lastRayDestiny;
     private Vector3 _oldSphereWorldPos;
     private Quaternion _oldSphereWorldRot;
+    private Vector3 _lastWallNormal;
+
+    private Vector3 _minDistDir;
+    private float _minDistInputX;
+    private float _minDistInputY;
 
     public void OnAxis(InputAction.CallbackContext context) => _inputAxis = context.ReadValue<Vector2>();
+
+    public void Recenter()
+    {
+        transform.position = target.position - target.forward * preferredDistance;
+    }
 
     private void Awake()
     {
@@ -57,7 +75,7 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
 
     private void Start()
     {
-        if(recenterOnStart) transform.position = target.position - target.forward * preferredDistance;
+        if (recenterOnStart) Recenter();
         if (target != null)
         {
             _lastTargetPosition = target.position;
@@ -93,11 +111,16 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
 
     private void ComputeTargetCameraTransform(out Vector3 cameraTargetPos, out Quaternion cameraTargetRot)
     {
+        bool wasOccluded = _isOccluded;
+
         Vector3 newSphereRelativePos = RotateCameraSphere(_oldSphereWorldPos - _lastTargetPosition);
         newSphereRelativePos = newSphereRelativePos.normalized * preferredDistance;
 
-        newSphereRelativePos = ClampCameraHeight(newSphereRelativePos, out bool neededClamping);
+        //newSphereRelativePos = ClampCameraHeight(newSphereRelativePos, out bool neededClamping);
         newSphereRelativePos = CheckOcclusion(newSphereRelativePos, out Vector3 cameraLocalPos, out bool neededRelocation);
+        newSphereRelativePos = RecoverDistance(newSphereRelativePos, wasOccluded);
+        newSphereRelativePos = CheckMinDistance(newSphereRelativePos);
+        newSphereRelativePos = ClampCameraHeight(newSphereRelativePos, out bool neededClamping2);
 
         Vector3 newSphereWorldPos = newSphereRelativePos + target.position;
         _oldSphereWorldPos = newSphereWorldPos;
@@ -106,6 +129,7 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
         cameraTargetPos = newCameraWorldPos;
         cameraTargetRot = Quaternion.LookRotation(target.position - newCameraWorldPos);
         _lastTargetPosition = target.position;
+        _lastDistance = newSphereRelativePos.magnitude;
     }
 
     private Vector3 RotateCameraSphere(Vector3 sphereRelativePos)
@@ -169,7 +193,7 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
             cameraLocalPos = Vector3.zero;
             return sphereRelativePos;
         }
-        Vector3 origin = _lastTargetPosition + sphereRelativePos.normalized * minDistToTarget;
+        Vector3 origin = _lastTargetPosition;// + sphereRelativePos.normalized * minDistToTarget;
         Vector3 destiny = _lastTargetPosition + sphereRelativePos.normalized * (sphereRelativePos.magnitude + radius);
         Vector3 raycastDir = destiny - origin;
         _lastRayDestiny = destiny;
@@ -179,11 +203,13 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
         else
             _isOccluded = false;
 
+        _lastWallNormal = hit.normal;
+
         float finalPreferredDistance = preferredDistance;
         if (_isOccluded)
         {
-            finalPreferredDistance = hit.distance + minDistToTarget - surfacePenetration * radius;
-            _isOverlapping = Physics.OverlapSphereNonAlloc(_oldSphereWorldPos, radius, _overlappers, occlusionMask, QueryTriggerInteraction.Ignore) > 1;
+            finalPreferredDistance = hit.distance/* + minDistToTarget*/ - surfacePenetration * radius;
+            _isOverlapping = checkOverlap && Physics.OverlapSphereNonAlloc(_oldSphereWorldPos, radius, _overlappers, occlusionMask, QueryTriggerInteraction.Ignore) > 1;
             if (_isOverlapping)
                 cameraLocalPos = -raycastDir.normalized * (surfacePenetration * radius);
             else
@@ -209,11 +235,78 @@ public class CameraController : MonoBehaviour, Controls.ICameraMapActions
         return sphereRelativePos;
     }
 
+    private Vector3 RecoverDistance(Vector3 sphereRelativePos, bool wasOccluded)
+    {
+        if (!smoothDistanceRecovering) return sphereRelativePos;
+
+        //if it goes from occluded to occcluded a transition should start
+        bool shouldStartTransition = wasOccluded && !_isOccluded;
+        //if it was transitioning but is suddenly occluded, the transition should stop
+        bool shouldEndTransition = _isOccluded && _isRecoveringDistance;
+
+        if (shouldStartTransition)
+        {
+            _originalDistance = _lastDistance;
+            _recoverDistanceTime = 0f;
+            _isRecoveringDistance = true;
+        }
+
+        if (shouldEndTransition)
+        {
+            _isRecoveringDistance = false;
+        }
+
+        if (_isRecoveringDistance)
+        {
+            _recoverDistanceTime += Time.deltaTime;
+            shouldEndTransition = _recoverDistanceTime >= recoverDistanceMaxTime;
+            _recoverDistanceTime = Mathf.Min(_recoverDistanceTime, recoverDistanceMaxTime);
+            float lerp = Mathf.SmoothStep(0, 1, _recoverDistanceTime / recoverDistanceMaxTime);
+            float distance = Mathf.Lerp(_originalDistance, preferredDistance, lerp);
+            sphereRelativePos = sphereRelativePos.normalized * distance;
+
+            if (shouldEndTransition)
+            {
+                _isRecoveringDistance = false;
+            }
+        }
+        return sphereRelativePos;
+    }
+
+    private Vector3 CheckMinDistance(Vector3 sphereRelativePos)
+    {
+        if (_inputAxis.x != 0)
+        {
+            _minDistInputX = _inputAxis.x;
+        }
+        if (_inputAxis.y != 0)
+        {
+            _minDistInputY = _inputAxis.y;
+        }
+
+        _minDistDir = (_oldSphereWorldRot * new Vector3(-_minDistInputX, _minDistInputY, 0f));
+
+        float dot = Vector3.Dot(_lastWallNormal, _minDistDir);
+        _isGoingOutOfWall = dot >= 0;
+        if(sphereRelativePos.magnitude < (minDistToTarget + surfacePenetration * radius))
+        {
+            if (!_isGoingOutOfWall)
+            {
+              sphereRelativePos = _oldSphereWorldPos-_lastTargetPosition;
+            }
+            sphereRelativePos = sphereRelativePos.normalized * (minDistToTarget + surfacePenetration * radius);
+        }
+
+        return sphereRelativePos;
+    }
+
     #region GIZMOS
 #if UNITY_EDITOR
     private void OnDrawGizmos()
     {
-        Gizmos.color = (checkOcclussion && _isOccluded) ? Color.red : Color.blue;
+        Gizmos.DrawLine(_oldSphereWorldPos, _oldSphereWorldPos+ _minDistDir);
+        if (_isRecoveringDistance) Gizmos.color = Color.magenta;
+        else Gizmos.color = (checkOcclussion && _isOccluded) ? Color.red : Color.blue;
         if (Application.isPlaying && checkOcclussion)
         {
             Gizmos.DrawLine(_lastRayOrigin, _lastRayDestiny);
