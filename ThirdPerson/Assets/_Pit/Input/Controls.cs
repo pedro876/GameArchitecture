@@ -31,7 +31,7 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                     ""name"": ""Axis"",
                     ""type"": ""PassThrough"",
                     ""id"": ""36f263cb-9504-482e-973c-1c596a0d5dd2"",
-                    ""expectedControlType"": ""Delta"",
+                    ""expectedControlType"": ""Vector2"",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -44,6 +44,17 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                     ""path"": ""<Mouse>/delta"",
                     ""interactions"": """",
                     ""processors"": ""ScaleVector2(x=20,y=20)"",
+                    ""groups"": """",
+                    ""action"": ""Axis"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d3a43f51-2c48-40c6-9ee0-1c80c88dcf8b"",
+                    ""path"": ""<Gamepad>/rightStick"",
+                    ""interactions"": """",
+                    ""processors"": ""ScaleVector2(x=100,y=-100)"",
                     ""groups"": """",
                     ""action"": ""Axis"",
                     ""isComposite"": false,
@@ -120,6 +131,17 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                     ""action"": ""Motion"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""db7e0fb3-b41d-4c27-9076-4a0cf788c49b"",
+                    ""path"": ""<Gamepad>/leftStick"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Motion"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
