@@ -13,6 +13,12 @@ public class CharacterController : MonoBehaviour, Controls.IMovementMapActions
     private Rigidbody _rb;
     private Transform _cam;
     private Vector2 _inputMotion = Vector2.zero;
+
+    public void OnJump(InputAction.CallbackContext context)
+    {
+        throw new System.NotImplementedException();
+    }
+
     public void OnMotion(InputAction.CallbackContext context) => _inputMotion = context.ReadValue<Vector2>();
     private void Awake()
     {

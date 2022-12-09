@@ -74,6 +74,15 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Jump"",
+                    ""type"": ""Button"",
+                    ""id"": ""6c5fb12f-6148-4aa5-ba6f-9c2c303127bd"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -142,6 +151,17 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                     ""action"": ""Motion"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2177cdf1-6619-44a8-a16d-86f5bc7b6826"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Jump"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -154,6 +174,7 @@ public partial class @Controls : IInputActionCollection2, IDisposable
         // MovementMap
         m_MovementMap = asset.FindActionMap("MovementMap", throwIfNotFound: true);
         m_MovementMap_Motion = m_MovementMap.FindAction("Motion", throwIfNotFound: true);
+        m_MovementMap_Jump = m_MovementMap.FindAction("Jump", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -247,11 +268,13 @@ public partial class @Controls : IInputActionCollection2, IDisposable
     private readonly InputActionMap m_MovementMap;
     private IMovementMapActions m_MovementMapActionsCallbackInterface;
     private readonly InputAction m_MovementMap_Motion;
+    private readonly InputAction m_MovementMap_Jump;
     public struct MovementMapActions
     {
         private @Controls m_Wrapper;
         public MovementMapActions(@Controls wrapper) { m_Wrapper = wrapper; }
         public InputAction @Motion => m_Wrapper.m_MovementMap_Motion;
+        public InputAction @Jump => m_Wrapper.m_MovementMap_Jump;
         public InputActionMap Get() { return m_Wrapper.m_MovementMap; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -264,6 +287,9 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                 @Motion.started -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnMotion;
                 @Motion.performed -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnMotion;
                 @Motion.canceled -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnMotion;
+                @Jump.started -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnJump;
+                @Jump.performed -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnJump;
+                @Jump.canceled -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnJump;
             }
             m_Wrapper.m_MovementMapActionsCallbackInterface = instance;
             if (instance != null)
@@ -271,6 +297,9 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                 @Motion.started += instance.OnMotion;
                 @Motion.performed += instance.OnMotion;
                 @Motion.canceled += instance.OnMotion;
+                @Jump.started += instance.OnJump;
+                @Jump.performed += instance.OnJump;
+                @Jump.canceled += instance.OnJump;
             }
         }
     }
@@ -282,5 +311,6 @@ public partial class @Controls : IInputActionCollection2, IDisposable
     public interface IMovementMapActions
     {
         void OnMotion(InputAction.CallbackContext context);
+        void OnJump(InputAction.CallbackContext context);
     }
 }
