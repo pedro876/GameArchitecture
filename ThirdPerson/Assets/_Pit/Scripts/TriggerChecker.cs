@@ -5,23 +5,40 @@ using UnityEngine;
 
 public class TriggerChecker : MonoBehaviour
 {
-    [SerializeField] LayerMask layerMask;
-
+    public LayerMask layerMask;
     public HashSet<GameObject> objects;
+    public GameObject lastObj;
+    //public bool IsColliding => enabled && ((objects != null && objects.Count > 0) || _anyOverlap);
     public bool IsColliding => enabled && objects != null && objects.Count > 0;
 
-    private bool disabledTemporarily = false;
-    private bool destroyed = false;
+    //private bool _anyOverlap = false;
+    private bool _disabledTemporarily = false;
+    private bool _destroyed = false;
+    //private Rigidbody _rb;
+    //private SphereCollider _sphere;
+
+    //[SerializeField] int objCount;
+
+    //private void Awake()
+    //{
+    //    _rb = GetComponent<Rigidbody>();
+    //    if (_rb != null)
+    //    {
+    //        _sphere = GetComponent<SphereCollider>();
+    //    }
+    //}
+
+    #region ENABLING
 
     public async void DisableForSeconds(float seconds)
     {
-        if (disabledTemporarily) return;
-        disabledTemporarily = true;
+        if (_disabledTemporarily) return;
+        _disabledTemporarily = true;
         gameObject.SetActive(false);
         await Task.Delay((int)(seconds * 1000f));
-        if (destroyed) return;
+        if (_destroyed) return;
         gameObject.SetActive(true);
-        disabledTemporarily = false;
+        _disabledTemporarily = false;
     }
 
     private void OnEnable()
@@ -37,8 +54,23 @@ public class TriggerChecker : MonoBehaviour
 
     private void OnDestroy()
     {
-        destroyed = true;
+        _destroyed = true;
     }
+
+    #endregion
+
+    #region DETECTION
+
+    //private void LateUpdate()
+    //{
+    //    objCount = objects.Count;
+    //    if (_rb != null)
+    //    {
+    //        if (_rb.isKinematic && _sphere != null)
+    //            _anyOverlap = Physics.CheckSphere(transform.position, _sphere.radius*transform.lossyScale.x, layerMask, QueryTriggerInteraction.Ignore);
+    //        else _anyOverlap = false;
+    //    }
+    //}
 
     private void OnTriggerEnter(Collider other) => TryAddObject(other.gameObject);
     private void OnTriggerExit(Collider other) => TryRemoveObject(other.gameObject);
@@ -53,6 +85,7 @@ public class TriggerChecker : MonoBehaviour
         if (isValid)
         {
             objects.Add(obj);
+            lastObj = obj;
         }
     }
 
@@ -63,4 +96,6 @@ public class TriggerChecker : MonoBehaviour
             objects.Remove(obj);
         }
     }
+
+    #endregion
 }

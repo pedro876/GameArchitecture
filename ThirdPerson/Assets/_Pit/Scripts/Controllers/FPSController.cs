@@ -7,7 +7,13 @@ using UnityEngine.InputSystem;
 public class FPSController : MonoBehaviour
 {
     [Header("Motion")]
-    [SerializeField] float motionSpeed = 1f;
+    [SerializeField] ForceMode forceMode;
+    [SerializeField] float massOnFloor = 10f;
+    [SerializeField] float massOnAir = 3f;
+    [SerializeField] float dragOnFloor = 10f;
+    [SerializeField] float dragOnAir = 0f;
+    [SerializeField] float motionSpeedOnFloor = 30f;
+    [SerializeField] float motionSpeedOnAir = 1f;
     [SerializeField] float motionLerp = 1f;
 
     [Header("Camera")]
@@ -26,7 +32,7 @@ public class FPSController : MonoBehaviour
     private CinemachineVirtualCamera _cam;
     private Controls _controls;
     private Rigidbody _rb;
-    private Hook _hook;
+    //private Hook _hook;
 
     private Vector2 _rawMotionInput;
     private Vector2 _rawCamInput;
@@ -40,7 +46,7 @@ public class FPSController : MonoBehaviour
         _controls = InputManager.controls;
         _cam = GetComponentInChildren<CinemachineVirtualCamera>();
         _rb = GetComponent<Rigidbody>();
-        _hook = GetComponentInChildren<Hook>();
+        //_hook = GetComponentInChildren<Hook>();
     }
 
     #region InputBinding
@@ -76,15 +82,15 @@ public class FPSController : MonoBehaviour
         if (context.performed)
         {
             if (IsGrounded) Jump(jumpForce);
-            else _hook.SetState(Hook.State.LAUNCHED);
+            //else _hook.SetState(Hook.State.LAUNCHED);
         }
         if (context.canceled)
         {
-            if(!IsGrounded && _hook.state == Hook.State.HOOKED)
-            {
-                Jump(jumpForceOnHook);
-            }
-            _hook.SetState(Hook.State.RAPEL);
+            //if(!IsGrounded && _hook.state == Hook.State.HOOKED)
+            //{
+            //    Jump(jumpForceOnHook);
+            //}
+            //_hook.SetState(Hook.State.RAPEL);
         }
     }
 
@@ -94,6 +100,8 @@ public class FPSController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        _rb.drag = IsGrounded ? dragOnFloor : dragOnAir;
+        _rb.mass = IsGrounded ? massOnFloor : massOnAir;
         ProcessInput();
         MoveCharacter();
         MoveCamera();
@@ -108,8 +116,9 @@ public class FPSController : MonoBehaviour
     private void MoveCharacter()
     {
         Vector3 motionDir = MotionToCameraSpace(out float magnitude);
-        if(magnitude > 0f)
-            _rb.MovePosition(_rb.position + motionDir * motionSpeed * Time.fixedDeltaTime);
+        if (magnitude > 0f)
+            _rb.AddForce(motionDir * (IsGrounded ? motionSpeedOnFloor : motionSpeedOnAir), forceMode);
+            //_rb.MovePosition(_rb.position + motionDir * motionSpeed * Time.fixedDeltaTime);
     }
 
     private void MoveCamera()

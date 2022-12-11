@@ -14,10 +14,11 @@ public class CharacterController : MonoBehaviour, Controls.IMovementMapActions
     private Transform _cam;
     private Vector2 _inputMotion = Vector2.zero;
 
-    public void OnJump(InputAction.CallbackContext context)
-    {
-        throw new System.NotImplementedException();
-    }
+    public void OnHook(InputAction.CallbackContext context) { }
+
+    public void OnJump(InputAction.CallbackContext context) { }
+
+    public void OnCancelHook(InputAction.CallbackContext context) { }
 
     public void OnMotion(InputAction.CallbackContext context) => _inputMotion = context.ReadValue<Vector2>();
     private void Awake()

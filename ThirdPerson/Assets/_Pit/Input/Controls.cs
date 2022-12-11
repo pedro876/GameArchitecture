@@ -83,6 +83,24 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Hook"",
+                    ""type"": ""Button"",
+                    ""id"": ""60b32d03-1db6-4f03-bef4-1661b689ed70"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""CancelHook"",
+                    ""type"": ""Button"",
+                    ""id"": ""ff0a5ad5-b987-4556-aa76-40691a40af4b"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -162,6 +180,28 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                     ""action"": ""Jump"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""743bd246-0015-4bbb-806c-437e4da1c03c"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Hook"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""398d3d19-04a2-4bc3-a439-e92d56f147bf"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""CancelHook"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -175,6 +215,8 @@ public partial class @Controls : IInputActionCollection2, IDisposable
         m_MovementMap = asset.FindActionMap("MovementMap", throwIfNotFound: true);
         m_MovementMap_Motion = m_MovementMap.FindAction("Motion", throwIfNotFound: true);
         m_MovementMap_Jump = m_MovementMap.FindAction("Jump", throwIfNotFound: true);
+        m_MovementMap_Hook = m_MovementMap.FindAction("Hook", throwIfNotFound: true);
+        m_MovementMap_CancelHook = m_MovementMap.FindAction("CancelHook", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -269,12 +311,16 @@ public partial class @Controls : IInputActionCollection2, IDisposable
     private IMovementMapActions m_MovementMapActionsCallbackInterface;
     private readonly InputAction m_MovementMap_Motion;
     private readonly InputAction m_MovementMap_Jump;
+    private readonly InputAction m_MovementMap_Hook;
+    private readonly InputAction m_MovementMap_CancelHook;
     public struct MovementMapActions
     {
         private @Controls m_Wrapper;
         public MovementMapActions(@Controls wrapper) { m_Wrapper = wrapper; }
         public InputAction @Motion => m_Wrapper.m_MovementMap_Motion;
         public InputAction @Jump => m_Wrapper.m_MovementMap_Jump;
+        public InputAction @Hook => m_Wrapper.m_MovementMap_Hook;
+        public InputAction @CancelHook => m_Wrapper.m_MovementMap_CancelHook;
         public InputActionMap Get() { return m_Wrapper.m_MovementMap; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -290,6 +336,12 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                 @Jump.started -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnJump;
                 @Jump.performed -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnJump;
                 @Jump.canceled -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnJump;
+                @Hook.started -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnHook;
+                @Hook.performed -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnHook;
+                @Hook.canceled -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnHook;
+                @CancelHook.started -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnCancelHook;
+                @CancelHook.performed -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnCancelHook;
+                @CancelHook.canceled -= m_Wrapper.m_MovementMapActionsCallbackInterface.OnCancelHook;
             }
             m_Wrapper.m_MovementMapActionsCallbackInterface = instance;
             if (instance != null)
@@ -300,6 +352,12 @@ public partial class @Controls : IInputActionCollection2, IDisposable
                 @Jump.started += instance.OnJump;
                 @Jump.performed += instance.OnJump;
                 @Jump.canceled += instance.OnJump;
+                @Hook.started += instance.OnHook;
+                @Hook.performed += instance.OnHook;
+                @Hook.canceled += instance.OnHook;
+                @CancelHook.started += instance.OnCancelHook;
+                @CancelHook.performed += instance.OnCancelHook;
+                @CancelHook.canceled += instance.OnCancelHook;
             }
         }
     }
@@ -312,5 +370,7 @@ public partial class @Controls : IInputActionCollection2, IDisposable
     {
         void OnMotion(InputAction.CallbackContext context);
         void OnJump(InputAction.CallbackContext context);
+        void OnHook(InputAction.CallbackContext context);
+        void OnCancelHook(InputAction.CallbackContext context);
     }
 }

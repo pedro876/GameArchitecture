@@ -2,22 +2,26 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RopeTest : MonoBehaviour
+public class Rope : MonoBehaviour
 {
     //Debemos lanzar una bola desde el origen que sea independiente de la cuerda
     //Conforme la bola se aleja, generamos una esfera de cuerda por cada 5 (distance) unidades
+    [Header("Debug")]
     [SerializeField] float timeScale = 1f;
-    [SerializeField] float extraGravity = 0f;
-    [SerializeField] float randomness = 1f;
-    [SerializeField, Range(0,1)] float ignoreCompressed = 1f;
-    [SerializeField] bool correctAdvancedSpheres = true;
-    [SerializeField] int maxJoints = 10;
+    [Header("Launch")]
     [SerializeField] float launchVelocity = 10f;
-    [SerializeField] float drag = 2f;
+    [SerializeField] float extraGravity = 0f;
+    [SerializeField, Range(-1, 1)] float velocityPctWhenStopeed = 0f;
+
+    [Header("Joints")]
     [SerializeField] float springConstantK = 10f;
     [SerializeField] float maxSpringLength = 5f;
-    [SerializeField, Range(-1, 1)] float velocityPctWhenStopeed = 0f;
+    [SerializeField] float drag = 2f;
+    [SerializeField] float randomness = 1f;
+    [SerializeField] int maxJoints = 10;
+    [SerializeField, Range(0,1)] float ignoreCompressed = 1f;
     [SerializeField, Range(0, 1)] float springLengthMultiplier = 1f;
+    
 
     private List<Rigidbody> _spheres;
     private List<Transform> _cylinders;
@@ -89,14 +93,17 @@ public class RopeTest : MonoBehaviour
                 LaunchSphere(joint);
             }
         }
+    }
 
+    private void LateUpdate()
+    {
         //Put cylinders
-        for(int i = 0; i < _spheres.Count-1; i++)
+        for (int i = 0; i < _spheres.Count - 1; i++)
         {
-            Vector3 middle = (_spheres[i].transform.position + _spheres[i + 1].transform.position) *0.5f;
+            Vector3 middle = (_spheres[i].transform.position + _spheres[i + 1].transform.position) * 0.5f;
             Vector3 dir = _spheres[i + 1].transform.position - _spheres[i].transform.position;
             float mag = dir.magnitude;
-            if(mag > 0f)
+            if (mag > 0f)
             {
                 Quaternion rot = Quaternion.LookRotation(dir) * Quaternion.Euler(new Vector3(90f, 0f, 0f));
                 _cylinders[i].transform.rotation = rot;
@@ -117,19 +124,8 @@ public class RopeTest : MonoBehaviour
         Vector3 prevPos = _spheres[index - 1].position;
         Vector3 nextPos = _spheres[index + 1].position;
         Vector3 currentPos = _spheres[index].position;
-
-
         Vector3 toPrev = prevPos - currentPos;
         Vector3 toNext = nextPos - currentPos;
-        if (correctAdvancedSpheres)
-        {
-            bool hasPassedNext = Vector3.Dot(nextPos - OriginSphere.position, toNext) < -0.1f; //Si la dirección desde prev a next es contraria a la dirección desde current a next
-            if (hasPassedNext)
-            {
-                //Debug.Log("Has passed: " + index);
-                toNext = (OriginSphere.position - currentPos).normalized* springLength*1.1f;
-            }
-        }
         float toPrevDisplacement = toPrev.magnitude - springLength;
         float toNextDisplacement = toNext.magnitude - springLength;
         if (toPrevDisplacement < 0f) toPrevDisplacement *= (1f-ignoreCompressed);
