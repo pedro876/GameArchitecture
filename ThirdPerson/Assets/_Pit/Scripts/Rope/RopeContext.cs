@@ -27,7 +27,7 @@ namespace Pit.Rope
 
         [Header("Rapel")]
         public float rapelSpeed = 1f;
-        public float rapelForce = 1f;
+        //public float rapelForce = 1f;
         public float maxTensionToRapel = 1.1f;
         //public float extraGravity = 0f;
         //[HideInInspector] public Vector3 acceleration;

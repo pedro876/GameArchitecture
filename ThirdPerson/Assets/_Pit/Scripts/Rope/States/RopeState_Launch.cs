@@ -86,7 +86,7 @@ namespace Pit.Rope
         {
             joint.drag = 0f;
             joint.transform.position = context.OriginJoint.transform.position;
-            joint.velocity = context.transform.forward * context.launchVelocity;
+            joint.velocity = context.OriginJoint.targetVelocity + context.transform.forward * context.launchVelocity;
         }
 
         //private void LaunchJointVerlet(RopeJoint joint)
