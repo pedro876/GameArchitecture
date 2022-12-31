@@ -34,6 +34,8 @@ public class TPSController2 : MonoBehaviour
     private bool _goingUp = false;
 
     private Vector3 _motionVelocity;
+    public Vector3 MotionVelocity { get => _motionVelocity; }
+    public float MaxVelocity { get => maxVelocity; }
 
     private void Awake()
     {
@@ -83,7 +85,11 @@ public class TPSController2 : MonoBehaviour
     {
         ProcessInput();
         ApplyTurningRotation();
-        ApplyMovement();
+        if (_grounded)
+        {
+            ApplyMotionMovement();
+            ApplyToGroundMovement();
+        }
         CheckGroundedAndFalling();
     }
 
@@ -99,40 +105,39 @@ public class TPSController2 : MonoBehaviour
         transform.Rotate(Vector3.up, turningSpeed * _viewInput.x * Time.deltaTime);
     }
     Vector3 finalDir;
-    private void ApplyMovement()
+
+    private void ApplyMotionMovement()
     {
-        if (_grounded)
+        float finalMaxVelocity = maxVelocity * _motionInput.magnitude;
+        Vector3 targetDir = new Vector3(_motionInput.x, 0f, _motionInput.y);
+        float dirLength = targetDir.magnitude;
+        if (dirLength > 0f)
         {
-            float finalMaxVelocity = maxVelocity * _motionInput.magnitude;
-            Vector3 targetDir = new Vector3(_motionInput.x, 0f, _motionInput.y);
-            float dirLength = targetDir.magnitude;
-            if(dirLength > 0f)
-            {
-                targetDir = Vector3.ProjectOnPlane(_cam.TransformDirection(targetDir), Vector3.up).normalized;
-            }
+            targetDir = Vector3.ProjectOnPlane(_cam.TransformDirection(targetDir), Vector3.up).normalized;
+        }
 
-            Vector3 currentDir = _motionVelocity / maxVelocity;
-            finalDir = targetDir - currentDir;
-            if (finalDir.magnitude < 1f) finalDir.Normalize();
+        Vector3 currentDir = _motionVelocity / maxVelocity;
+        finalDir = targetDir - currentDir;
+        if (finalDir.magnitude < 1f) finalDir.Normalize();
 
-            Debug.Log(finalDir);
+        _motionVelocity += finalDir * acceleration * Time.deltaTime;
 
-            _motionVelocity += finalDir * acceleration * Time.deltaTime;
+        if (_motionVelocity.magnitude > finalMaxVelocity) _motionVelocity = _motionVelocity.normalized * finalMaxVelocity;
 
-            if (_motionVelocity.magnitude > finalMaxVelocity) _motionVelocity = _motionVelocity.normalized * finalMaxVelocity;
+        Vector3 finalMovement = _motionVelocity * Time.deltaTime;
+        finalMovement.y -= 0.03f;
 
-            Vector3 finalMovement = _motionVelocity*Time.deltaTime;
-            finalMovement.y -= 0.03f;
+        _characterController.Move(finalMovement);
+        //_motionVelocity = Vector3.ProjectOnPlane(_characterController.velocity, Vector3.up);
+    }
 
-            _characterController.Move(finalMovement);
-            _motionVelocity = _characterController.velocity;
-
-            _goingUp = _motionVelocity.y > goingUpThreshold;
-            if (!_goingUp)
-            {
-                Vector3 toGroundMovement = new Vector3(0f, -toGroundForce * Time.deltaTime, 0f);
-                _characterController.Move(toGroundMovement);
-            }
+    private void ApplyToGroundMovement()
+    {
+        _goingUp = _motionVelocity.y > goingUpThreshold;
+        if (!_goingUp)
+        {
+            Vector3 toGroundMovement = new Vector3(0f, -toGroundForce * Time.deltaTime, 0f);
+            _characterController.Move(toGroundMovement);
         }
     }
 

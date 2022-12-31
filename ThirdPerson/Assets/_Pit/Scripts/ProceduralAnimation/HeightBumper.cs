@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class HeightBumper : MonoBehaviour
 {
-    [SerializeField] Transform rig;
     [SerializeField] FlyweightCurve flyweightCurve;
     [SerializeField] float downForce = 0.03f;
     [SerializeField] float timeStretch = 1f;
 
+    private Transform _rig;
     private CharacterController _characterController;
     private TPSController2 _tpsController;
 
@@ -27,8 +27,9 @@ public class HeightBumper : MonoBehaviour
 
     private void Awake()
     {
-        _characterController = GetComponent<CharacterController>();
-        _tpsController = GetComponent<TPSController2>();
+        _rig = transform;
+        _characterController = GetComponentInParent<CharacterController>();
+        _tpsController = GetComponentInParent<TPSController2>();
         _tpsController.OnGrounded += ApplyDownForce;
     }
 
@@ -37,9 +38,9 @@ public class HeightBumper : MonoBehaviour
         _originalHeight = _characterController.height;
         _originalCenter = _characterController.center;
         _maxTime = flyweightCurve.curve.keys[flyweightCurve.curve.length - 1].time * timeStretch;
-        _pointBottom = transform.position + _originalCenter - transform.up * _originalHeight * 0.5f;
-        _pointTop = transform.position + _originalCenter + transform.up * _originalHeight * 0.5f;
-        _originalRigScaleY = rig != null ? rig.localScale.z : 1f;
+        _pointBottom = transform.position + _originalCenter - transform.forward * _originalHeight * 0.5f;
+        _pointTop = transform.position + _originalCenter + transform.forward * _originalHeight * 0.5f;
+        _originalRigScaleY = _rig != null ? _rig.localScale.z : 1f;
     }
 
     private void ApplyDownForce(float fallVelocity)
@@ -61,7 +62,7 @@ public class HeightBumper : MonoBehaviour
 
     private void Simulate()
     {
-        _pointBottom = transform.position + _originalCenter - transform.up * _originalHeight * 0.5f;
+        _pointBottom = transform.position + _originalCenter - transform.forward * _originalHeight * 0.5f;
         if (_runningAnim)
         {
             _runningTime += Time.deltaTime;
@@ -76,18 +77,18 @@ public class HeightBumper : MonoBehaviour
         else _currentHeight = _originalHeight;
         Vector3 center = _originalCenter;
         center.y = center.y - (_originalHeight - _currentHeight) * 0.5f;
-        _pointTop = transform.position + center + transform.up * _currentHeight * 0.5f;
+        _pointTop = transform.position + center + transform.forward * _currentHeight * 0.5f;
     }
 
     private void ApplyOnRig()
     {
-        if (rig == null) return;
+        if (_rig == null) return;
         float newScaleY = (_currentHeight / _originalHeight)*_originalRigScaleY;
-        Vector3 currentScale = rig.localScale;
+        Vector3 currentScale = _rig.localScale;
         if (!currentScale.z.Equals(newScaleY))
         {
             currentScale.z = newScaleY;
-            rig.localScale = currentScale;
+            _rig.localScale = currentScale;
         }
     }
 
@@ -96,9 +97,9 @@ public class HeightBumper : MonoBehaviour
         if (!isActiveAndEnabled) return;
         if (!Application.isPlaying)
         {
-            CharacterController characterController = GetComponent<CharacterController>();
-            _pointBottom = transform.position + characterController.center - transform.up * characterController.height * 0.5f;
-            _pointTop = transform.position + characterController.center + transform.up * characterController.height * 0.5f;
+            CharacterController characterController = GetComponentInParent<CharacterController>();
+            _pointBottom = transform.position + characterController.center - transform.forward * characterController.height * 0.5f;
+            _pointTop = transform.position + characterController.center + transform.forward * characterController.height * 0.5f;
         }
         Gizmos.color = Color.magenta;
         Gizmos.DrawSphere(_pointBottom, 0.1f);
